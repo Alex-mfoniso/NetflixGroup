@@ -12,7 +12,8 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "react-native-image-picker";
+// import * as ImagePicker from "react-native-image-picker";
+import * as ImagePicker from "expo-image-picker";
 
 const ProfileSelection = () => {
   const navigation = useNavigation();
@@ -46,23 +47,52 @@ const ProfileSelection = () => {
     }
   };
 
-  const handleAddOrEditProfile = (profile = null) => {
-    if (profile) {
-      setNewProfileName(profile.name);
-      setSelectedImage(profile.image);
-      setEditingProfile(profile.id);
-    } else {
-      setNewProfileName("");
-      setSelectedImage(null);
-      setEditingProfile(null);
-    }
-    ImagePicker.launchImageLibrary({ mediaType: "photo" }, (response) => {
-      if (!response.didCancel && response.assets) {
-        setSelectedImage(response.assets[0].uri);
-        setModalVisible(true);
-      }
-    });
-  };
+  
+const handleAddOrEditProfile = async (profile = null) => {
+  if (profile) {
+    setNewProfileName(profile.name);
+    setSelectedImage(profile.image);
+    setEditingProfile(profile.id);
+  } else {
+    setNewProfileName("");
+    setSelectedImage(null);
+    setEditingProfile(null);
+  }
+  // Request permission
+  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!permissionResult.granted) {
+    alert("Permission to access media library is required!");
+    return;
+  }
+  // Launch picker
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    quality: 1,
+  });
+  if (!result.canceled) {
+    setSelectedImage(result.assets[0].uri);
+    setModalVisible(true);
+  }
+};
+
+  // const handleAddOrEditProfile = (profile = null) => {
+  //   if (profile) {
+  //     setNewProfileName(profile.name);
+  //     setSelectedImage(profile.image);
+  //     setEditingProfile(profile.id);
+  //   } else {
+  //     setNewProfileName("");
+  //     setSelectedImage(null);
+  //     setEditingProfile(null);
+  //   }
+  //   ImagePicker.launchImageLibrary({ mediaType: "photo" }, (response) => {
+  //     if (!response.didCancel && response.assets) {
+  //       setSelectedImage(response.assets[0].uri);
+  //       setModalVisible(true);
+  //     }
+  //   });
+  // };
 
   const handleSaveProfile = () => {
     if (newProfileName && selectedImage) {
