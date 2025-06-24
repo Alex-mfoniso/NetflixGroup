@@ -10,12 +10,13 @@ import {
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Icon from "react-native-vector-icons/Ionicons"; // 👁️ Import icon
 
 const SignIn = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false); // 👁️ State for password visibility
 
-  // Function to get login details from AsyncStorage
   const getLoginDetails = async () => {
     try {
       const storedEmail = await AsyncStorage.getItem("userEmail");
@@ -43,12 +44,8 @@ const SignIn = ({ navigation }) => {
 
       if (storedEmail && storedPassword) {
         if (storedEmail === email && storedPassword === password) {
-          // Login successful, store current session info if needed
-          await AsyncStorage.setItem("isLoggedIn", "true"); // Add a session flag
-
+          await AsyncStorage.setItem("isLoggedIn", "true");
           Alert.alert("Success", "Login successful");
-
-          // Navigate to the ProfileSelection screen
           navigation.navigate("ProfileSelection");
         } else {
           Alert.alert("Error", "Invalid email or password");
@@ -72,13 +69,23 @@ const SignIn = ({ navigation }) => {
           value={email}
           onChangeText={(text) => setEmail(text)}
         />
-        <TextInput
-          style={styles.textInputStyle}
-          placeholder="Password"
-          value={password}
-          onChangeText={(text) => setPassword(text)}
-          secureTextEntry
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            value={password}
+            onChangeText={(text) => setPassword(text)}
+            secureTextEntry={!passwordVisible}
+          />
+          <Pressable onPress={() => setPasswordVisible(!passwordVisible)}>
+            <Icon
+              name={passwordVisible ? "eye" : "eye-off"}
+              size={24}
+              color="#333"
+              style={styles.eyeIcon}
+            />
+          </Pressable>
+        </View>
         <TouchableOpacity style={styles.buttonParent} onPress={handleSignIn}>
           <Text style={styles.buttonText}>Sign In</Text>
         </TouchableOpacity>
@@ -127,6 +134,24 @@ const styles = StyleSheet.create({
     width: "90%",
     borderRadius: 8,
     color: "#333333",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#adadad",
+    borderRadius: 8,
+    width: "90%",
+    height: 50,
+    paddingHorizontal: 10,
+    marginTop: 20,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 18,
+    color: "#333",
+  },
+  eyeIcon: {
+    paddingLeft: 10,
   },
   buttonParent: {
     marginTop: 30,

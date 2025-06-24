@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome5";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "react-native-image-picker";
+import * as ImagePicker from "expo-image-picker"; // using Expo version
 
 const ManageProfiles = ({ navigation }) => {
   const [profiles, setProfiles] = useState([]);
@@ -19,7 +19,6 @@ const ManageProfiles = ({ navigation }) => {
   const [newProfileName, setNewProfileName] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingProfile, setEditingProfile] = useState(null);
-  const [isEditingMode, setIsEditingMode] = useState(true);
   const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState(null);
 
@@ -41,13 +40,13 @@ const ManageProfiles = ({ navigation }) => {
   const saveProfiles = async (updatedProfiles) => {
     try {
       await AsyncStorage.setItem("profiles", JSON.stringify(updatedProfiles));
-      setProfiles(updatedProfiles); // Updates state after saving
+      setProfiles(updatedProfiles);
     } catch (error) {
       console.error("Failed to save profiles:", error);
     }
   };
 
-  const handleAddOrEditProfile = (profile = null) => {
+  const handleAddOrEditProfile = async (profile = null) => {
     if (profile) {
       setNewProfileName(profile.name);
       setSelectedImage(profile.image);
@@ -57,17 +56,32 @@ const ManageProfiles = ({ navigation }) => {
       setSelectedImage(null);
       setEditingProfile(null);
     }
-    ImagePicker.launchImageLibrary({ mediaType: "photo" }, (response) => {
-      if (!response.didCancel && response.assets) {
-        setSelectedImage(response.assets[0].uri);
-        setModalVisible(true);
-      }
+
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access media library is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
     });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setSelectedImage(result.assets[0].uri);
+      setModalVisible(true);
+    }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (newProfileName && selectedImage) {
       let updatedProfiles;
+      let newId = Date.now().toString();
+
       if (editingProfile) {
         updatedProfiles = profiles.map((profile) =>
           profile.id === editingProfile
@@ -78,13 +92,25 @@ const ManageProfiles = ({ navigation }) => {
         updatedProfiles = [
           ...profiles,
           {
-            id: Date.now().toString(), // Unique ID based on timestamp
+            id: newId,
             name: newProfileName,
             image: selectedImage,
           },
         ];
       }
-      saveProfiles(updatedProfiles);
+
+      await saveProfiles(updatedProfiles);
+
+      // ✅ Set as current selected profile
+      await AsyncStorage.setItem(
+        "profile",
+        JSON.stringify({
+          id: editingProfile || newId,
+          name: newProfileName,
+          image: selectedImage,
+        })
+      );
+
       setNewProfileName("");
       setSelectedImage(null);
       setModalVisible(false);
@@ -109,22 +135,20 @@ const ManageProfiles = ({ navigation }) => {
     <View style={styles.profileContainer}>
       <TouchableOpacity style={styles.profileBox}>
         <Image source={{ uri: item.image }} style={styles.profileImage} />
-        {isEditingMode && (
-          <View style={styles.overlay}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => handleAddOrEditProfile(item)}
-            >
-              <Icon name="edit" size={20} color="#fff" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => confirmDeleteProfile(item.id)}
-            >
-              <Icon name="trash" size={20} color="#e50914" />
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.overlay}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => handleAddOrEditProfile(item)}
+          >
+            <Icon name="edit" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => confirmDeleteProfile(item.id)}
+          >
+            <Icon name="trash" size={20} color="#e50914" />
+          </TouchableOpacity>
+        </View>
       </TouchableOpacity>
       <Text style={styles.profileName}>{item.name}</Text>
     </View>
@@ -143,12 +167,17 @@ const ManageProfiles = ({ navigation }) => {
         data={[...profiles, { id: "add", name: "Add Profile" }]}
         renderItem={({ item }) =>
           item.id === "add" ? (
-            <TouchableOpacity
-              style={styles.addBox}
-              onPress={() => handleAddOrEditProfile()}
-            >
-              <Icon name="plus" size={40} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.profileContainer}>
+              <TouchableOpacity
+                style={styles.profileBox}
+                onPress={() => handleAddOrEditProfile()}
+              >
+                <View style={styles.addIconWrapper}>
+                  <Icon name="plus" size={40} color="#fff" />
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.profileName}>Add Profile</Text>
+            </View>
           ) : (
             renderProfile({ item })
           )
@@ -156,6 +185,7 @@ const ManageProfiles = ({ navigation }) => {
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
         contentContainerStyle={styles.profileList}
+        columnWrapperStyle={styles.columnWrapper}
       />
 
       <Modal visible={isModalVisible} transparent animationType="slide">
@@ -220,46 +250,51 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#141414",
-    alignItems: "center",
     paddingTop: 40,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    width: "90%",
-    marginBottom: 50,
+    paddingHorizontal: 20,
+    marginBottom: 30,
   },
   headerText: {
     fontSize: 28,
     color: "#fff",
     fontWeight: "bold",
-    textAlign: "center",
-    flex: 1,
   },
   doneButton: {
     fontSize: 18,
     color: "#fff",
   },
+  profileList: {
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+  },
+  columnWrapper: {
+    justifyContent: "space-between",
+    marginBottom: 25,
+  },
   profileContainer: {
+    width: "45%",
     alignItems: "center",
-    margin: 10,
-    flex: 1,
   },
   profileBox: {
-    width: 150,
-    height: 150,
+    width: "100%",
+    aspectRatio: 1,
     backgroundColor: "#333",
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: "hidden",
+    justifyContent: "center",
+    alignItems: "center",
     position: "relative",
-    marginBottom: 10,
-    marginHorizontal: 10,
   },
   profileImage: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
+    borderRadius: 10,
   },
   overlay: {
     position: "absolute",
@@ -276,19 +311,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   profileName: {
+    color: "#fff",
     fontSize: 16,
-    color: "white",
+    marginTop: 10,
     fontWeight: "600",
-    marginTop: 8,
   },
-  addBox: {
-    width: 150,
-    height: 150,
-    backgroundColor: "#555",
-    borderRadius: 8,
+  addIconWrapper: {
     justifyContent: "center",
     alignItems: "center",
-    margin: 10,
+    flex: 1,
   },
   modalOverlay: {
     flex: 1,
@@ -298,9 +329,9 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: "80%",
-    padding: 20,
     backgroundColor: "#333",
     borderRadius: 10,
+    padding: 20,
     alignItems: "center",
   },
   modalTitle: {
@@ -308,12 +339,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     marginBottom: 20,
+    textAlign: "center",
   },
   input: {
     width: "100%",
-    padding: 10,
     backgroundColor: "#444",
     color: "#fff",
+    padding: 10,
     borderRadius: 8,
     marginBottom: 20,
     fontSize: 16,
@@ -325,16 +357,16 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#e50914",
-    borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     marginHorizontal: 5,
   },
   cancelButton: {
     backgroundColor: "#666",
-    borderRadius: 8,
     paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     marginHorizontal: 5,
   },
   saveButtonText: {

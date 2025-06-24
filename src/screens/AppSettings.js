@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Switch,
-  ScrollView,
   FlatList,
   Modal,
   Linking,
@@ -17,10 +16,9 @@ import { useNavigation } from "@react-navigation/native";
 const AppSettings = () => {
   const navigation = useNavigation();
 
-  // State variables
   const [switchStates, setSwitchStates] = useState({
     notifications: false,
-    wifiOnly: true,
+    wifionly: true,
   });
   const [isConnected, setIsConnected] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -28,7 +26,6 @@ const AppSettings = () => {
   const [downloadQuality, setDownloadQuality] = useState("Standard");
   const [downloadLocation, setDownloadLocation] = useState("Internal Storage");
 
-  // Network status check
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
@@ -36,7 +33,6 @@ const AppSettings = () => {
     return () => unsubscribe();
   }, []);
 
-  // Toggle switch function
   const handleToggleSwitch = (key) => {
     setSwitchStates((prevStates) => ({
       ...prevStates,
@@ -44,7 +40,6 @@ const AppSettings = () => {
     }));
   };
 
-  // Open internet speed test website
   const testInternetSpeed = () => {
     const speedTestUrl = "https://fast.com";
     Linking.openURL(speedTestUrl).catch((err) =>
@@ -52,7 +47,6 @@ const AppSettings = () => {
     );
   };
 
-  // Settings options array
   const settingsOptions = [
     {
       section: "Video Playback",
@@ -95,7 +89,7 @@ const AppSettings = () => {
         {
           title: "Device",
           subtitle:
-            "Version: 8.137.0 build 4\nOS API: 34, arm64-v8a\nModel: 22120RN86G\n... [and other details]",
+            "Version: 8.137.0 build 4\nOS API: 34, arm64-v8a\nModel: 22120RN86G",
           icon: "smartphone",
         },
         {
@@ -128,7 +122,6 @@ const AppSettings = () => {
     },
   ];
 
-  // Render each setting item
   const renderSettingItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer} onPress={item.onPress}>
       <Icon name={item.icon} size={24} color="#fff" style={styles.icon} />
@@ -153,7 +146,6 @@ const AppSettings = () => {
     </TouchableOpacity>
   );
 
-  // Render each section with items
   const renderSection = ({ item }) => {
     const filteredItems = item.items.filter((settingItem) => {
       if (settingItem.title === "Mobile Data Usage") {
@@ -162,9 +154,7 @@ const AppSettings = () => {
       return true;
     });
 
-    if (filteredItems.length === 0) {
-      return null;
-    }
+    if (filteredItems.length === 0) return null;
 
     return (
       <View style={styles.sectionContainer}>
@@ -173,45 +163,41 @@ const AppSettings = () => {
           data={filteredItems}
           renderItem={renderSettingItem}
           keyExtractor={(item, index) => `${item.title}-${index}`}
+          scrollEnabled={false}
         />
       </View>
     );
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      {/* Back Button Icon */}
+  const renderHeader = () => (
+    <>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.goBack()}
       >
         <Icon name="arrow-back" size={30} color="#fff" />
       </TouchableOpacity>
-
       <Text style={styles.title}>App Settings</Text>
+    </>
+  );
 
-      {/* Settings Sections */}
-      <FlatList
-        data={settingsOptions}
-        renderItem={renderSection}
-        keyExtractor={(item, index) => `${item.section}-${index}`}
-      />
-
-      {/* Download Quality Modal */}
-      <Modal visible={modalVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Download Video Quality</Text>
+  const renderQualityModal = () => (
+    <Modal visible={modalVisible} transparent={true} animationType="slide">
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Download Video Quality</Text>
+          {["Standard", "High"].map((quality) => (
             <TouchableOpacity
+              key={quality}
               style={styles.modalOption}
               onPress={() => {
-                setDownloadQuality("Standard");
+                setDownloadQuality(quality);
                 setModalVisible(false);
               }}
             >
               <Icon
                 name={
-                  downloadQuality === "Standard"
+                  downloadQuality === quality
                     ? "radio-button-checked"
                     : "radio-button-unchecked"
                 }
@@ -219,54 +205,40 @@ const AppSettings = () => {
                 color="#fff"
               />
               <View style={styles.modalOptionText}>
-                <Text style={styles.optionTitle}>Standard</Text>
+                <Text style={styles.optionTitle}>{quality}</Text>
                 <Text style={styles.optionSubtitle}>
-                  Downloads faster and uses less storage.
+                  {quality === "Standard"
+                    ? "Downloads faster and uses less storage."
+                    : "Uses more storage."}
                 </Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                setDownloadQuality("High");
-                setModalVisible(false);
-              }}
-            >
-              <Icon
-                name={
-                  downloadQuality === "High"
-                    ? "radio-button-checked"
-                    : "radio-button-unchecked"
-                }
-                size={24}
-                color="#fff"
-              />
-              <View style={styles.modalOptionText}>
-                <Text style={styles.optionTitle}>High</Text>
-                <Text style={styles.optionSubtitle}>Uses more storage.</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={styles.modalCancel}>CANCEL</Text>
-            </TouchableOpacity>
-          </View>
+          ))}
+          <TouchableOpacity onPress={() => setModalVisible(false)}>
+            <Text style={styles.modalCancel}>CANCEL</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-      {/* Download Location */}
-      <Modal visible={locationVisible} transparent={true} animationType="slide">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Save to Phone.</Text>
+      </View>
+    </Modal>
+  );
+
+  const renderLocationModal = () => (
+    <Modal visible={locationVisible} transparent={true} animationType="slide">
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Save to Phone</Text>
+          {["Internal Storage", "Sd Card"].map((location) => (
             <TouchableOpacity
+              key={location}
               style={styles.modalOption}
               onPress={() => {
-                setDownloadLocation("Internal Storage");
+                setDownloadLocation(location);
                 setLocationVisible(false);
               }}
             >
               <Icon
                 name={
-                  downloadLocation === "Internal Storage"
+                  downloadLocation === location
                     ? "radio-button-checked"
                     : "radio-button-unchecked"
                 }
@@ -274,42 +246,37 @@ const AppSettings = () => {
                 color="#fff"
               />
               <View style={styles.modalOptionText}>
-                <Text style={styles.optionTitle}>Internal Storage</Text>
-                <Text style={styles.optionSubtitle}>Save to Phone.</Text>
+                <Text style={styles.optionTitle}>{location}</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.modalOption}
-              onPress={() => {
-                setDownloadLocation("Sd Card");
-                setLocationVisible(false);
-              }}
-            >
-              <Icon
-                name={
-                  downloadLocation === "Sd Card"
-                    ? "radio-button-checked"
-                    : "radio-button-unchecked"
-                }
-                size={24}
-                color="#fff"
-              />
-              <View style={styles.modalOptionText}>
-                <Text style={styles.optionTitle}>Sd Card</Text>
-                <Text style={styles.optionSubtitle}></Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setLocationVisible(false)}>
-              <Text style={styles.modalCancel}>CANCEL</Text>
-            </TouchableOpacity>
-          </View>
+          ))}
+          <TouchableOpacity onPress={() => setLocationVisible(false)}>
+            <Text style={styles.modalCancel}>CANCEL</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-    </ScrollView>
+      </View>
+    </Modal>
+  );
+
+  return (
+    <>
+      <FlatList
+        style={styles.container}
+        data={settingsOptions}
+        renderItem={renderSection}
+        keyExtractor={(item, index) => `${item.section}-${index}`}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={
+          <>
+            {renderQualityModal()}
+            {renderLocationModal()}
+          </>
+        }
+      />
+    </>
   );
 };
 
-// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -322,6 +289,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 50,
     marginLeft: 50,
+    marginBottom: 20,
   },
   backButton: {
     position: "absolute",
@@ -335,7 +303,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: "#b3b3b3",
     fontSize: 16,
-    marginBottom: 2,
+    marginBottom: 5,
   },
   itemContainer: {
     backgroundColor: "#1f1f1f",

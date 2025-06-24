@@ -47,34 +47,34 @@ const ProfileSelection = () => {
     }
   };
 
-  
-const handleAddOrEditProfile = async (profile = null) => {
-  if (profile) {
-    setNewProfileName(profile.name);
-    setSelectedImage(profile.image);
-    setEditingProfile(profile.id);
-  } else {
-    setNewProfileName("");
-    setSelectedImage(null);
-    setEditingProfile(null);
-  }
-  // Request permission
-  const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permissionResult.granted) {
-    alert("Permission to access media library is required!");
-    return;
-  }
-  // Launch picker
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    quality: 1,
-  });
-  if (!result.canceled) {
-    setSelectedImage(result.assets[0].uri);
-    setModalVisible(true);
-  }
-};
+  const handleAddOrEditProfile = async (profile = null) => {
+    if (profile) {
+      setNewProfileName(profile.name);
+      setSelectedImage(profile.image);
+      setEditingProfile(profile.id);
+    } else {
+      setNewProfileName("");
+      setSelectedImage(null);
+      setEditingProfile(null);
+    }
+    // Request permission
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      alert("Permission to access media library is required!");
+      return;
+    }
+    // Launch picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+      setModalVisible(true);
+    }
+  };
 
   // const handleAddOrEditProfile = (profile = null) => {
   //   if (profile) {
@@ -183,18 +183,24 @@ const handleAddOrEditProfile = async (profile = null) => {
         data={[...profiles, { id: "add", name: "Add Profile" }]}
         renderItem={({ item }) =>
           item.id === "add" ? (
-            <TouchableOpacity
-              style={styles.addBox}
-              onPress={() => handleAddOrEditProfile()}
-            >
-              <Icon name="plus" size={40} color="#fff" />
-            </TouchableOpacity>
+            <View style={styles.profileContainer}>
+              <TouchableOpacity
+                style={styles.profileBox}
+                onPress={() => handleAddOrEditProfile()}
+              >
+                <View style={styles.addIconWrapper}>
+                  <Icon name="plus" size={40} color="#fff" />
+                </View>
+              </TouchableOpacity>
+              <Text style={styles.profileName}>Add Profile</Text>
+            </View>
           ) : (
             renderProfile({ item })
           )
         }
         keyExtractor={(item) => item.id.toString()}
         numColumns={2}
+        contentContainerStyle={styles.listContainer}
       />
 
       <Modal visible={isModalVisible} transparent animationType="slide">
@@ -256,19 +262,20 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     alignItems: "center",
+    justifyContent: "center",
+    width: "45%", // was flex: 1
     margin: 10,
-    flex: 1,
   },
   profileBox: {
-    width: 150,
-    height: 150,
+    width: "100%",
+    aspectRatio: 1, // maintain square shape on all devices
     backgroundColor: "#333",
     borderRadius: 8,
     overflow: "hidden",
     position: "relative",
     marginBottom: 10,
-    marginHorizontal: 10,
   },
+
   profileImage: {
     width: "100%",
     height: "100%",
@@ -294,15 +301,21 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginTop: 8,
   },
+  addIconWrapper: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   addBox: {
-    width: 150,
-    height: 150,
+    width: "100%",
+    aspectRatio: 1,
     backgroundColor: "#555",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    margin: 10,
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.6)",
@@ -357,6 +370,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: "#e50914",
     fontSize: 16,
+  },
+  listContainer: {
+    paddingHorizontal: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 

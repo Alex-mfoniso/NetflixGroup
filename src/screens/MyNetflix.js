@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome5";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { dummyList } from "./MyList";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native"; // ✅ Add this
 
 const MyNetflix = ({ navigation }) => {
   const [profile, setProfile] = useState([]);
@@ -36,19 +38,20 @@ const MyNetflix = ({ navigation }) => {
     },
   ];
 
-  useEffect(() => {
-    const loadProfileAndMovies = async () => {
-      // Load profile from AsyncStorage
-      const storedProfiles = await AsyncStorage.getItem("profile");
-      if (storedProfiles) {
-        setProfile(JSON.parse(storedProfiles));
-      }
+  // ✅ Refresh when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      const loadProfileAndMovies = async () => {
+        const storedProfiles = await AsyncStorage.getItem("profile");
+        if (storedProfiles) {
+          setProfile(JSON.parse(storedProfiles));
+        }
+        setMovieList(dummyList);
+      };
 
-      // Use static dummyList for movies
-      setMovieList(dummyList);
-    };
-    loadProfileAndMovies();
-  }, []);
+      loadProfileAndMovies();
+    }, [])
+  );
 
   const handleDrawerItemPress = (item) => {
     if (item.screen) {
@@ -71,178 +74,193 @@ const MyNetflix = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>My Netflix</Text>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity onPress={() => navigation.navigate("Search")}>
-            <Icon name="search" size={20} color="#fff" style={styles.icon} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setDrawerVisible(true)}>
-            <Icon name="bars" size={20} color="#fff" style={styles.icon} />
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerText}>My Netflix</Text>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity onPress={() => navigation.navigate("Search")}>
+              <Icon name="search" size={20} color="#fff" style={styles.icon} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setDrawerVisible(true)}>
+              <Icon name="bars" size={20} color="#fff" style={styles.icon} />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Profile Section */}
-      <View style={styles.profileContainer}>
-        {profile?.image ? (
-          <Image source={{ uri: profile.image }} style={styles.profileImage} />
-        ) : (
-          <Icon name="user-circle" size={60} color="#fff" />
-        )}
-        <Text style={styles.profileName}>{profile?.name || "Guest"}</Text>
-      </View>
+        {/* Profile Section */}
+        <View style={styles.profileContainer}>
+          {profile?.image ? (
+            <Image
+              source={{ uri: profile.image }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <Icon name="user-circle" size={60} color="#fff" />
+          )}
+          <Text style={styles.profileName}>{profile?.name || "Guest"}</Text>
+        </View>
 
-      {/* My List Section */}
-      <View style={styles.myListContainer}>
-        <TouchableOpacity
-          style={styles.sectionButton}
-          onPress={() => navigation.navigate("MyList")}
-        >
-          <Icon name="list" size={20} color="#3498db" style={styles.iconLeft} />
-          <Text style={styles.myListHeader}>My List</Text>
-          <Icon
-            name="chevron-right"
-            size={16}
-            color="#fff"
-            style={styles.iconRight}
-          />
-        </TouchableOpacity>
-        {movieList.length > 0 ? (
-          <FlatList
-            data={movieList.slice(0, 5)} // Preview first five movies
-            keyExtractor={(item) => item.id.toString()}
-            horizontal
-            renderItem={({ item }) => (
-              <View style={styles.movieItem}>
-                {item.image ? (
-                  <Image source={item.image} style={styles.movieImage} />
-                ) : (
-                  <Text style={styles.movieText}>No Image</Text>
-                )}
-                <Text style={styles.movieText}>{item.title}</Text>
-              </View>
-            )}
-            showsHorizontalScrollIndicator={false}
-          />
-        ) : (
-          <Text style={styles.emptyText}>Your list is empty</Text>
-        )}
-      </View>
-
-      {/* Downloads Section */}
-      <View style={styles.downloadContainer}>
-        <TouchableOpacity
-          style={styles.sectionButton}
-          onPress={() => navigation.navigate("Download")}
-        >
-          <Icon
-            name="download"
-            size={20}
-            color="#3498db"
-            style={styles.iconLeft}
-          />
-          <Text style={styles.downloadHeader}>Downloads</Text>
-          <Icon
-            name="chevron-right"
-            size={16}
-            color="#fff"
-            style={styles.iconRight}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/*Notifications*/}
-      <View style={styles.notificationContainer}>
-        <TouchableOpacity
-          style={styles.sectionButton}
-          onPress={() => navigation.navigate("Notifications")}
-        >
-          <Icon name="bell" size={20} color="#3498db" style={styles.iconLeft} />
-          <Text style={styles.notificationHeader}>Notifications</Text>
-          <Icon
-            name="chevron-right"
-            size={16}
-            color="#fff"
-            style={styles.iconRight}
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Drawer Modal */}
-      <Modal
-        visible={isDrawerVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setDrawerVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.drawerContent}>
+        {/* My List Section */}
+        <View style={styles.myListContainer}>
+          <TouchableOpacity
+            style={styles.sectionButton}
+            onPress={() => navigation.navigate("MyList")}
+          >
+            <Icon
+              name="list"
+              size={20}
+              color="#3498db"
+              style={styles.iconLeft}
+            />
+            <Text style={styles.myListHeader}>My List</Text>
+            <Icon
+              name="chevron-right"
+              size={16}
+              color="#fff"
+              style={styles.iconRight}
+            />
+          </TouchableOpacity>
+          {movieList.length > 0 ? (
             <FlatList
-              data={drawerOptions}
-              keyExtractor={(item) => item.id}
+              data={movieList.slice(0, 5)}
+              keyExtractor={(item) => item.id.toString()}
+              horizontal
               renderItem={({ item }) => (
-                <View style={styles.drawerItemContainer}>
-                  <TouchableOpacity
-                    style={styles.drawerItem}
-                    onPress={() => handleDrawerItemPress(item)}
-                    disabled={!item.screen && !item.action} // Disable click for version item
-                  >
-                    <Icon
-                      name={item.icon}
-                      size={20}
-                      color="white"
-                      style={styles.drawerIcon}
-                    />
-                    <Text style={styles.drawerText}>{item.name}</Text>
-                  </TouchableOpacity>
-                  {item.name === "Manage Profile" && ( // Check if it's the Manage Profile item
-                    <TouchableOpacity
-                      onPress={() => setDrawerVisible(false)}
-                      style={styles.closeButton}
-                    >
-                      <Icon name="times" size={20} color="#fff" />
-                    </TouchableOpacity>
+                <View style={styles.movieItem}>
+                  {item.image ? (
+                    <Image source={item.image} style={styles.movieImage} />
+                  ) : (
+                    <Text style={styles.movieText}>No Image</Text>
                   )}
+                  <Text style={styles.movieText}>{item.title}</Text>
                 </View>
               )}
+              showsHorizontalScrollIndicator={false}
             />
-          </View>
+          ) : (
+            <Text style={styles.emptyText}>Your list is empty</Text>
+          )}
         </View>
-      </Modal>
 
-      {/* Sign-Out Confirmation Modal */}
-      <Modal
-        visible={isSignOutModalVisible}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSignOutModalVisible(false)}
-      >
-        <View style={styles.signOutModalContainer}>
-          <View style={styles.signOutModalContent}>
-            <Text style={styles.signOutText}>
-              Are you sure you want to sign out?
-            </Text>
-            <View style={styles.signOutButtonContainer}>
-              <TouchableOpacity
-                onPress={handleSignOut}
-                style={styles.signOutButtonConfirm}
-              >
-                <Text style={styles.signOutButtonText}>Sign Out</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setSignOutModalVisible(false)}
-                style={styles.signOutButtonCancel}
-              >
-                <Text style={styles.signOutButtonText}>Cancel</Text>
-              </TouchableOpacity>
+        {/* Downloads */}
+        <View style={styles.downloadContainer}>
+          <TouchableOpacity
+            style={styles.sectionButton}
+            onPress={() => navigation.navigate("Download")}
+          >
+            <Icon
+              name="download"
+              size={20}
+              color="#3498db"
+              style={styles.iconLeft}
+            />
+            <Text style={styles.downloadHeader}>Downloads</Text>
+            <Icon
+              name="chevron-right"
+              size={16}
+              color="#fff"
+              style={styles.iconRight}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Notifications */}
+        <View style={styles.notificationContainer}>
+          <TouchableOpacity
+            style={styles.sectionButton}
+            onPress={() => navigation.navigate("Notifications")}
+          >
+            <Icon
+              name="bell"
+              size={20}
+              color="#3498db"
+              style={styles.iconLeft}
+            />
+            <Text style={styles.notificationHeader}>Notifications</Text>
+            <Icon
+              name="chevron-right"
+              size={16}
+              color="#fff"
+              style={styles.iconRight}
+            />
+          </TouchableOpacity>
+        </View>
+
+        {/* Drawer Modal */}
+        <Modal
+          visible={isDrawerVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setDrawerVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.drawerContent}>
+              <FlatList
+                data={drawerOptions}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={styles.drawerItemContainer}>
+                    <TouchableOpacity
+                      style={styles.drawerItem}
+                      onPress={() => handleDrawerItemPress(item)}
+                      disabled={!item.screen && !item.action}
+                    >
+                      <Icon
+                        name={item.icon}
+                        size={20}
+                        color="white"
+                        style={styles.drawerIcon}
+                      />
+                      <Text style={styles.drawerText}>{item.name}</Text>
+                    </TouchableOpacity>
+                    {item.name === "Manage Profile" && (
+                      <TouchableOpacity
+                        onPress={() => setDrawerVisible(false)}
+                        style={styles.closeButton}
+                      >
+                        <Icon name="times" size={20} color="#fff" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              />
             </View>
           </View>
-        </View>
-      </Modal>
-    </View>
+        </Modal>
+
+        {/* Sign-Out Modal */}
+        <Modal
+          visible={isSignOutModalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setSignOutModalVisible(false)}
+        >
+          <View style={styles.signOutModalContainer}>
+            <View style={styles.signOutModalContent}>
+              <Text style={styles.signOutText}>
+                Are you sure you want to sign out?
+              </Text>
+              <View style={styles.signOutButtonContainer}>
+                <TouchableOpacity
+                  onPress={handleSignOut}
+                  style={styles.signOutButtonConfirm}
+                >
+                  <Text style={styles.signOutButtonText}>Sign Out</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setSignOutModalVisible(false)}
+                  style={styles.signOutButtonCancel}
+                >
+                  <Text style={styles.signOutButtonText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      </View>
+    </SafeAreaView>
   );
 };
 

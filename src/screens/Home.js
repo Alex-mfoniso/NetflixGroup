@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   ScrollView,
@@ -15,11 +16,36 @@ import pic from "../assets/images/walkingdead.jpeg";
 import { tvShows, games, trendingMovies } from "../components/Data";
 import NewHot from "./NewHot";
 import MyNetflix from "./MyNetflix";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator();
 
-// Home Screen Content
+// Home Screen Component
 function Home({ navigation }) {
+  const [userName, setUserName] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadUserName = async () => {
+        try {
+          const profile = await AsyncStorage.getItem("profile");
+          if (profile) {
+            const parsedProfile = JSON.parse(profile);
+            setUserName(parsedProfile.name);
+          } else {
+            setUserName("Guest");
+          }
+        } catch (e) {
+          console.error("Failed to load profile", e);
+          setUserName("Guest");
+        }
+      };
+
+      loadUserName();
+    }, [])
+  );
+
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.itemContainer}>
       <Image source={item.image} style={styles.itemImage} />
@@ -28,12 +54,9 @@ function Home({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Top Navigation Bar */}
+    <SafeAreaView style={styles.container}>
       <View style={styles.topBar}>
-        <View style={styles.topBarLeft}>
-          <Text style={styles.title}>Welcome</Text>
-        </View>
+        <Text style={styles.title}>Welcome {String(userName)}</Text>
         <View style={styles.icons}>
           <TouchableOpacity onPress={() => navigation.navigate("Download")}>
             <Icon
@@ -53,40 +76,24 @@ function Home({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+
       <ScrollView style={styles.scroller} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollwrapper}>
           <View style={styles.bigFrames}>
             <Image source={pic} style={styles.bannerpic} />
-            {/* Gradient Overlay on Image */}
             <LinearGradient
               colors={["rgba(0,0,0,0.7)", "transparent"]}
               style={styles.header}
-            >
-              <View style={styles.headContent}>
-                <View style={styles.logoHolder}></View>
-                <View style={styles.headBtnHolder}></View>
-              </View>
-            </LinearGradient>
-            {/* Genre Description and Buttons */}
+            />
             <View style={styles.contentWrapper}>
               <Text style={styles.genreText}>Horror • Violence • Sex</Text>
               <View style={styles.buttonRow}>
                 <TouchableOpacity style={styles.playButton}>
-                  <Icon
-                    name="play"
-                    size={20}
-                    color="black"
-                    style={styles.playIcon}
-                  />
+                  <Icon name="play" size={20} color="black" />
                   <Text style={styles.playText}>Play</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.myListButton}>
-                  <Icon
-                    name="add"
-                    size={20}
-                    color="white"
-                    style={styles.addIcon}
-                  />
+                  <Icon name="add" size={20} color="white" />
                   <Text style={styles.myListText}>My List</Text>
                 </TouchableOpacity>
               </View>
@@ -118,25 +125,20 @@ function Home({ navigation }) {
           showsHorizontalScrollIndicator={false}
         />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
+// Bottom Tab Navigator
 export default function HomeTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           let iconName;
-
-          if (route.name === "Homepage") {
-            iconName = "home-outline";
-          } else if (route.name === "New & Hot") {
-            iconName = "flame-outline";
-          } else if (route.name === "My Netflix") {
-            iconName = "person-outline";
-          }
-
+          if (route.name === "Homepage") iconName = "home-outline";
+          else if (route.name === "New & Hot") iconName = "flame-outline";
+          else if (route.name === "My Netflix") iconName = "person-outline";
           return <Icon name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: "#3498db",
@@ -153,10 +155,7 @@ export default function HomeTabs() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#000",
-  },
+  container: { flex: 1, backgroundColor: "#000" },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -261,7 +260,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 5,
   },
-  sectionTitle: { color: "white", fontSize: 18, marginLeft: 10, marginTop: 20 },
+  sectionTitle: {
+    color: "white",
+    fontSize: 18,
+    marginLeft: 10,
+    marginTop: 20,
+  },
   itemContainer: { margin: 10 },
   itemImage: { width: 120, height: 180, borderRadius: 8 },
   itemText: { color: "#fff", textAlign: "center", marginTop: 5 },

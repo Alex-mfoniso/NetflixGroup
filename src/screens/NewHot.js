@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const newHotMovies = [
   {
@@ -55,39 +56,41 @@ export default function NewHot({ navigation }) {
   );
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>New & Hot</Text>
-        <View style={styles.iconRow}>
-          <TouchableOpacity onPress={() => navigation.navigate("Download")}>
-            <Ionicons
-              name="download-outline"
-              size={24}
-              color="white"
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("Search")}>
-            <Ionicons
-              name="search-outline"
-              size={24}
-              color="white"
-              style={styles.icon}
-            />
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>New & Hot</Text>
+          <View style={styles.iconRow}>
+            <TouchableOpacity onPress={() => navigation.navigate("Download")}>
+              <Ionicons
+                name="download-outline"
+                size={24}
+                color="white"
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate("Search")}>
+              <Ionicons
+                name="search-outline"
+                size={24}
+                color="white"
+                style={styles.icon}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Movie List */}
-      <FlatList
-        data={newHotMovies}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContainer}
-      />
-    </View>
+        {/* Movie List */}
+        <FlatList
+          data={newHotMovies}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContainer}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
