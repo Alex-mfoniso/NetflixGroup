@@ -12,11 +12,12 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome5";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import * as ImagePicker from "react-native-image-picker";
 import * as ImagePicker from "expo-image-picker";
 
 const ProfileSelection = () => {
   const navigation = useNavigation();
+
+  // 🔹 State for profiles and modal control
   const [profiles, setProfiles] = useState([]);
   const [isModalVisible, setModalVisible] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
@@ -25,9 +26,10 @@ const ProfileSelection = () => {
   const [isEditingMode, setIsEditingMode] = useState(false);
 
   useEffect(() => {
-    loadProfiles();
+    loadProfiles(); // 🔸 Load profiles when component mounts
   }, []);
 
+  // 🔹 Load saved profiles from AsyncStorage
   const loadProfiles = async () => {
     try {
       const storedProfiles = await AsyncStorage.getItem("profiles");
@@ -39,6 +41,7 @@ const ProfileSelection = () => {
     }
   };
 
+  // 🔹 Save updated profiles to AsyncStorage
   const saveProfiles = async (updatedProfiles) => {
     try {
       await AsyncStorage.setItem("profiles", JSON.stringify(updatedProfiles));
@@ -47,6 +50,7 @@ const ProfileSelection = () => {
     }
   };
 
+  // 🔹 Add or Edit a profile with image selection
   const handleAddOrEditProfile = async (profile = null) => {
     if (profile) {
       setNewProfileName(profile.name);
@@ -57,46 +61,34 @@ const ProfileSelection = () => {
       setSelectedImage(null);
       setEditingProfile(null);
     }
-    // Request permission
+
+    // 🔸 Ask for permission to access gallery
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       alert("Permission to access media library is required!");
       return;
     }
-    // Launch picker
+
+    // 🔸 Pick image
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 1,
     });
+
     if (!result.canceled) {
       setSelectedImage(result.assets[0].uri);
-      setModalVisible(true);
+      setModalVisible(true); // 🔸 Show modal to enter profile name
     }
   };
 
-  // const handleAddOrEditProfile = (profile = null) => {
-  //   if (profile) {
-  //     setNewProfileName(profile.name);
-  //     setSelectedImage(profile.image);
-  //     setEditingProfile(profile.id);
-  //   } else {
-  //     setNewProfileName("");
-  //     setSelectedImage(null);
-  //     setEditingProfile(null);
-  //   }
-  //   ImagePicker.launchImageLibrary({ mediaType: "photo" }, (response) => {
-  //     if (!response.didCancel && response.assets) {
-  //       setSelectedImage(response.assets[0].uri);
-  //       setModalVisible(true);
-  //     }
-  //   });
-  // };
-
+  // 🔹 Save new or edited profile to state and AsyncStorage
   const handleSaveProfile = () => {
     if (newProfileName && selectedImage) {
       let updatedProfiles;
+
+      // 🔸 Update existing profile
       if (editingProfile) {
         updatedProfiles = profiles.map((profile) =>
           profile.id === editingProfile
@@ -104,6 +96,7 @@ const ProfileSelection = () => {
             : profile
         );
       } else {
+        // 🔸 Add new profile
         updatedProfiles = [
           ...profiles,
           {
@@ -113,6 +106,7 @@ const ProfileSelection = () => {
           },
         ];
       }
+
       setProfiles(updatedProfiles);
       saveProfiles(updatedProfiles);
       setNewProfileName("");
@@ -121,25 +115,29 @@ const ProfileSelection = () => {
     }
   };
 
+  // 🔹 Delete a selected profile
   const handleDeleteProfile = (id) => {
     const updatedProfiles = profiles.filter((profile) => profile.id !== id);
     setProfiles(updatedProfiles);
     saveProfiles(updatedProfiles);
   };
 
+  // 🔹 Toggle edit mode (show edit/delete buttons)
   const toggleEditingMode = () => {
     setIsEditingMode(!isEditingMode);
   };
 
+  // 🔹 Navigate to Home with selected profile
   const navigateToHome = async (selectedProfile) => {
     try {
       await AsyncStorage.setItem("profile", JSON.stringify(selectedProfile));
-      navigation.navigate("Home");
+      navigation.navigate("Home"); // Go to Home screen
     } catch (error) {
       console.error("Failed to save selected profile:", error);
     }
   };
 
+  // 🔹 Render each profile box
   const renderProfile = ({ item }) => (
     <View style={styles.profileContainer}>
       <TouchableOpacity
@@ -170,6 +168,7 @@ const ProfileSelection = () => {
 
   return (
     <View style={styles.container}>
+      {/* 🔸 Header Section */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Who's Watching?</Text>
         <TouchableOpacity onPress={toggleEditingMode}>
@@ -179,6 +178,7 @@ const ProfileSelection = () => {
         </TouchableOpacity>
       </View>
 
+      {/* 🔸 Profile List with Add button */}
       <FlatList
         data={[...profiles, { id: "add", name: "Add Profile" }]}
         renderItem={({ item }) =>
@@ -203,6 +203,7 @@ const ProfileSelection = () => {
         contentContainerStyle={styles.listContainer}
       />
 
+      {/* 🔸 Modal for creating/editing profile */}
       <Modal visible={isModalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
