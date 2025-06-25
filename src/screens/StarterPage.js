@@ -13,6 +13,7 @@ import React, { useState, useEffect, useRef } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import mylogo from "../assets/images/logo.png";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const StarterPage = () => {
   const [isConnected, setIsConnected] = useState(null);
@@ -58,12 +59,23 @@ const StarterPage = () => {
     return () => unsubscribe();
   }, []);
 
+  // Inside useEffect after slide animation
   useEffect(() => {
     if (animationComplete) {
-      checkConnection();
+      checkStoredCredentials(); // checks if you have already logged in
     }
   }, [animationComplete]);
 
+  const checkStoredCredentials = async () => {
+    const email = await AsyncStorage.getItem("userEmail");
+    const password = await AsyncStorage.getItem("userPassword");
+
+    if (email && password) {
+      navigation.replace("ProfileSelection"); // already signed in
+    } else {
+      checkConnection(); // call your existing function to continue
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <Animated.Image
