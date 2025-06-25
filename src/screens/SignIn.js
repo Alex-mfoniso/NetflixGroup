@@ -61,6 +61,14 @@ const SignIn = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Back Arrow */}
+      <TouchableOpacity
+        style={styles.arrowContainer}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={30} color="#fff" />
+      </TouchableOpacity>
+
       <View style={styles.loginContainer}>
         <Text style={styles.labelStyle}>Sign In</Text>
         <TextInput
@@ -112,6 +120,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
+  },
+  arrowContainer: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
   },
   loginContainer: {
     flex: 1,

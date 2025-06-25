@@ -31,27 +31,30 @@ const styles = StyleSheet.create({
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
+    backgroundColor: "#000", // Make sure it matches screen bg
   },
   logoContainer: {
     flex: 1,
   },
   logo: {
-    width: 150,
-    height: 75,
+    width: 90, // ✅ Increased width
+    height: 60, // ✅ Increased height
     resizeMode: "contain",
+    marginRight: 50,
   },
   headerLinksContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginLeft: 50,
   },
   linkContainer: {
-    marginLeft: 20,
+    marginLeft: 15,
   },
   headerLinkText: {
-    color: "#000",
+    color: "#fff", // Visible on dark background
     fontSize: 16,
     fontWeight: "500",
   },

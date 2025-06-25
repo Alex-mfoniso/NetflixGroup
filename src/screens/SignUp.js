@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import React, { useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Ionicons from "react-native-vector-icons/Ionicons"; // Import icon
 import mybackground from "../assets/images/mynetback.jpg";
 
 const SignUp = ({ navigation }) => {
@@ -32,7 +33,7 @@ const SignUp = ({ navigation }) => {
       await AsyncStorage.setItem("userEmail", email);
       await AsyncStorage.setItem("userPassword", password);
       Alert.alert("Sign up successful!", "Your account has been created.");
-      navigation.navigate("ProfileSelection"); // Navigate to Home or SignIn after saving details
+      navigation.navigate("ProfileSelection");
     } catch (error) {
       console.log("Error saving credentials:", error);
       Alert.alert("Error", "An error occurred while creating your account.");
@@ -46,6 +47,13 @@ const SignUp = ({ navigation }) => {
       resizeMode="cover"
     >
       <View style={styles.overlay}>
+        {/* Back Arrow */}
+        <View style={styles.arrowContainer}>
+          <TouchableOpacity onPress={() => navigation.navigate("Slides")}>
+            <Ionicons name="arrow-back" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.intro}>Ready to watch?</Text>
         <Text style={styles.subtitle}>Create your new account</Text>
 
@@ -91,6 +99,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     paddingHorizontal: 20,
+  },
+  arrowContainer: {
+    position: "absolute",
+    top: 50,
+    left: 20,
+    zIndex: 10,
   },
   intro: {
     textAlign: "left",
